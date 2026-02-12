@@ -13,39 +13,71 @@ export default function Admin() {
   const [activeForm, setActiveForm] = useState("course");
   const [courses, setCourses] = useState([]);
   const [courseStats, setCourseStats] = useState([]);
+  const [, setTotalCourses] = useState(0);
 
   const [rollNumber, setRollNumber] = useState("");
   const [student, setStudent] = useState(null);
   const [expandedCourse, setExpandedCourse] = useState(null);
 
+  const [courseData, setCourseData] = useState({ title: "" });
+  const [topicData, setTopicData] = useState({ courseId: "", topic: "" });
+
+  // 1️⃣ RECTIFIED: Add course handler (Matches /add-course)
+  const handleAddCourse = async (e) => {
+    e.preventDefault();
+    if (!courseData.title.trim()) return alert("Please enter a course name");
+    try {
+      await axios.post(`${API}/add-course`, { title: courseData.title });
+      setCourseData({ title: "" });
+      fetchCourses();
+      alert("Course added successfully!");
+    } catch (err) {
+      console.error("Error adding course:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to add course.");
+    }
+  };
+
+  // 2️⃣ RECTIFIED: Add topic handler (Matches /add-topic and expects { courseId, topic })
+  const handleAddTopic = async (e) => {
+    e.preventDefault();
+    if (!topicData.courseId || !topicData.topic.trim()) return alert("Select course and enter topic");
+    try {
+      await axios.post(`${API}/add-topic`, { 
+        courseId: topicData.courseId, 
+        topic: topicData.topic 
+      });
+      setTopicData({ courseId: "", topic: "" });
+      fetchCourses();
+      alert("Topic added successfully!");
+    } catch (err) {
+      console.error("Error adding topic:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to add topic.");
+    }
+  };
 
   const fetchCourses = async () => {
     try {
       const res = await axios.get(`${API}/courses`);
       setCourses(res.data);
+      setTotalCourses(res.data.length);
       const chartData = res.data.map(course => ({
         name: course.title,
         value: course.enrolledStudents || 0
       }));
       setCourseStats(chartData);
-    } catch {
-      console.error("Fetch Error");
+    } catch (err) { 
+        console.error("Fetch Error:", err); 
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      await fetchCourses();
-    })();
-  }, []);
-  // Logic to determine if a course is Ongoing or Completed
+  useEffect(() => { fetchCourses(); }, []);
+
   const getNextTopicInfo = (courseId, currentTopicTitle) => {
     const dbCourse = courses.find(c => c._id === courseId);
-        // Removed unused state variables: totalCourses, courseData, topicData
-        // const [courseData, setCourseData] = useState({ title: "" });
-        // const [topicData, setTopicData] = useState({ courseId: "", topic: "" });
+    if (!dbCourse || !dbCourse.topics || dbCourse.topics.length === 0) return { next: null, isLast: false };
 
-    // Removed unused: totalCourses, courseData, setCourseData, topicData, setTopicData
+    if (!currentTopicTitle) return { next: dbCourse.topics[0].title, isLast: dbCourse.topics.length === 1 };
+
     const currentIndex = dbCourse.topics.findIndex(t => t.title === currentTopicTitle);
     
     if (currentIndex >= dbCourse.topics.length - 1) return { next: null, isLast: true };
@@ -67,19 +99,18 @@ export default function Admin() {
     }
   };
 
-  const handleUpdateTopic = async (courseId, topicToSubmit) => {
+  // eslint-disable-next-line no-unused-vars
+  const handleUpdateTopic = async (courseId, _topicToSubmit) => {
     try {
       await axios.put(`${API}/update-topic`, {
         rollNumber,
         courseId,
-        topic: topicToSubmit
+        topic: "Completed" // Backend logic uses "Completed" to trigger index increment
       });
-      alert(`Topic "${topicToSubmit}" marked complete!`);
-      handleSearch(); // Refresh student data
+      alert(`Topic updated!`);
+      handleSearch(); 
       setExpandedCourse(null);
-    } catch {
-      alert("Update failed");
-    }
+    } catch { alert("Update failed"); }
   };
 
   return (
@@ -93,25 +124,53 @@ export default function Admin() {
                 <button onClick={() => setActiveForm("course")} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeForm === "course" ? "bg-indigo-600 text-white shadow-md" : "bg-slate-100 text-slate-500"}`}>+ Course</button>
                 <button onClick={() => setActiveForm("topic")} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeForm === "topic" ? "bg-indigo-600 text-white shadow-md" : "bg-slate-100 text-slate-500"}`}>+ Topic</button>
             </div>
+
             {activeForm === "course" ? (
-                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                    <input type="text" placeholder="Course Name" className="w-full bg-slate-50 rounded-xl px-6 py-4 text-sm font-bold outline-none border border-slate-100 focus:border-indigo-300" />
-                    <button className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-indigo-600">Add Course</button>
-                </form>
+              <form className="space-y-4" onSubmit={handleAddCourse}>
+                <input
+                  type="text"
+                  placeholder="Course Name"
+                  value={courseData.title}
+                  onChange={e => setCourseData({ title: e.target.value })}
+                  className="w-full bg-slate-50 rounded-xl px-6 py-4 text-sm font-bold outline-none border border-slate-100 focus:border-indigo-300"
+                />
+                <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-indigo-600 transition-colors">Add Course</button>
+              </form>
             ) : (
-                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-                    <select className="w-full bg-slate-50 rounded-xl px-6 py-4 text-sm font-bold outline-none border border-slate-100">
-                        <option>Select Course</option>
-                        {courses.map(c => <option key={c._id} value={c._id}>{c.title}</option>)}
-                    </select>
-                    <input type="text" placeholder="Topic Title" className="w-full bg-slate-50 rounded-xl px-6 py-4 text-sm font-bold outline-none border border-slate-100" />
-                    <button className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold">Add Topic</button>
-                </form>
+              <form className="space-y-4" onSubmit={handleAddTopic}>
+                <select
+                  className="w-full bg-slate-50 rounded-xl px-6 py-4 text-sm font-bold outline-none border border-slate-100"
+                  value={topicData.courseId}
+                  onChange={e => setTopicData({ ...topicData, courseId: e.target.value })}
+                >
+                  <option value="">Select Course</option>
+                  {courses.map(c => <option key={c._id} value={c._id}>{c.title}</option>)}
+                </select>
+                <input
+                  type="text"
+                  placeholder="Topic Title"
+                  value={topicData.topic}
+                  onChange={e => setTopicData({ ...topicData, topic: e.target.value })}
+                  className="w-full bg-slate-50 rounded-xl px-6 py-4 text-sm font-bold outline-none border border-slate-100"
+                />
+                <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition-colors">Add Topic</button>
+              </form>
             )}
         </div>
+
         <div className="lg:col-span-7 bg-slate-900 rounded-3xl p-10 text-white shadow-2xl">
           <h3 className="text-xs uppercase tracking-widest text-indigo-400 mb-6 font-black">Global Enrollment Overview</h3>
-          <div className="h-64"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={courseStats} innerRadius={60} outerRadius={80} dataKey="value">{courseStats.map((_, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer></div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={courseStats} innerRadius={60} outerRadius={80} dataKey="value">
+                  {courseStats.map((_, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -124,10 +183,12 @@ export default function Admin() {
           placeholder="Enter Student Roll Number..." 
           className="flex-1 px-6 py-4 bg-transparent outline-none font-bold text-slate-700" 
         />
-        <button onClick={handleSearch} className="bg-indigo-600 text-white px-8 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg"><MdSearch size={24} /></button>
+        <button onClick={handleSearch} className="bg-indigo-600 text-white px-8 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg">
+          <MdSearch size={24} />
+        </button>
       </div>
 
-      {/* 3. SEARCH RESULTS: ONLY ONGOING AND COMPLETED COURSES */}
+      {/* 3. SEARCH RESULTS */}
       {student && (
         <div className="grid lg:grid-cols-2 gap-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
           
@@ -141,7 +202,7 @@ export default function Admin() {
             {student.ongoing?.filter(course => getNextTopicInfo(course.courseId, course.currentTopic).next !== null).map((course) => {
               const topicInfo = getNextTopicInfo(course.courseId, course.currentTopic);
               return (
-                <div key={course.courseId} className="bg-white p-6 rounded-4xl shadow-xl shadow-slate-200/40 border border-slate-50">
+                <div key={course.courseId} className="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-50">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                         <h4 className="font-black text-xl text-slate-800">{course.title}</h4>
@@ -168,7 +229,7 @@ export default function Admin() {
                         </div>
                         <button 
                           onClick={() => handleUpdateTopic(course.courseId, topicInfo.next)}
-                          className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black hover:bg-emerald-600 shadow-lg shadow-emerald-100 flex items-center justify-center gap-2"
+                          className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black hover:bg-emerald-600 shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 transition-all"
                         >
                           <MdCheckCircle size={20}/> Mark as Completed
                         </button>
@@ -200,11 +261,11 @@ export default function Admin() {
                 </div>
               ))}
               
-              {student.ongoing?.filter(course => {
+              {(!student.ongoing || student.ongoing.filter(course => {
                   const info = getNextTopicInfo(course.courseId, course.currentTopic);
                   return info.next === null && info.isLast === true;
-              }).length === 0 && (
-                <div className="text-center py-10 bg-white rounded-4xl border-2 border-dashed border-slate-100">
+              }).length === 0) && (
+                <div className="text-center py-10 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100">
                     <p className="text-slate-400 font-bold italic">No courses completed yet.</p>
                 </div>
               )}
