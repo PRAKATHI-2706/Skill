@@ -11,7 +11,8 @@ router.post("/register", authController.register);
 // POST /api/auth/login
 router.post("/login", authController.login);
 
-// PUT /api/auth/update-profile
+// PUT /api/auth/update-profile    
 router.put("/update-profile", authController.updateProfile);
 
-export default router; // <-- ES module default export
+export default router; 
+git
