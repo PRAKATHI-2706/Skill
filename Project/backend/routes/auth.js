@@ -15,4 +15,3 @@ router.post("/login", authController.login);
 router.put("/update-profile", authController.updateProfile);
 
 export default router; 
-git
