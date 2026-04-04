@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import BASE_BACKEND_URL from "../config"
 
 const Login = () => {
   const [isRegister, setIsRegister] = useState(false)
@@ -26,7 +27,6 @@ const Login = () => {
 
     try {
       // Use BASE_BACKEND_URL for API endpoints
-      const BASE_BACKEND_URL = require("../config").default || require("../config");
       const url = isRegister
         ? `${BASE_BACKEND_URL}/api/auth/register`
         : `${BASE_BACKEND_URL}/api/auth/login`
