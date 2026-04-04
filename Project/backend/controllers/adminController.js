@@ -1,3 +1,50 @@
+// 7️⃣ Delete Course (and remove from all users)
+export const deleteCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    // Remove course from DB
+    const deleted = await Course.findByIdAndDelete(courseId);
+    if (!deleted) return res.status(404).json({ message: "Course not found" });
+    // Remove course from all users' ongoing and completed
+    await User.updateMany(
+      {},
+      {
+        $pull: {
+          ongoing: { courseId: deleted._id },
+          completed: deleted.title
+        }
+      }
+    );
+    res.json({ message: "Course deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// 8️⃣ Delete Topic from Course (and all users)
+export const deleteTopic = async (req, res) => {
+  try {
+    const { courseId, topicTitle } = req.body;
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    // Remove topic from course
+    course.topics = course.topics.filter(t => t.title !== topicTitle);
+    await course.save();
+    // Remove topic from all users' ongoing courses
+    await User.updateMany(
+      { "ongoing.courseId": course._id },
+      {
+        $pull: {
+          "ongoing.$[elem].allTopics": topicTitle
+        }
+      },
+      { arrayFilters: [{ "elem.courseId": course._id }] }
+    );
+    res.json({ message: "Topic deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 import Course from "../models/Course.js";
 import User from "../models/User.js";
 

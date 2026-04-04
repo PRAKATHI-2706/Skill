@@ -7,7 +7,8 @@ import {
 } from "react-icons/md";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#3b82f6", "#10b981", "#f59e0b"];
-const API = "http://localhost:5000/api/admin";
+import BASE_BACKEND_URL from "../config";
+const API = `${BASE_BACKEND_URL}/api/admin`;
 
 export default function Admin() {
   const [activeForm, setActiveForm] = useState("course");

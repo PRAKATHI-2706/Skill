@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react"
 import axios from "axios"
+import BASE_BACKEND_URL from "../config"
 import {
   BarChart,
   Bar,
@@ -27,12 +28,12 @@ export default function StudentDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resCourses = await axios.get("http://localhost:5000/api/admin/courses")
+        const resCourses = await axios.get(`${BASE_BACKEND_URL}/api/admin/courses`)
         const allDbCourses = resCourses.data
         setAllCourses(allDbCourses)
 
         if (user && user._id) {
-          const resDashboard = await axios.get(`http://localhost:5000/api/student/dashboard/${user._id}`)
+          const resDashboard = await axios.get(`${BASE_BACKEND_URL}/api/student/dashboard/${user._id}`)
           const enrolledData = resDashboard.data.ongoing || []
 
           const tempOngoing = []

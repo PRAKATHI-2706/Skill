@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import axios from "axios"
+import BASE_BACKEND_URL from "../config"
 
 export default function Profile() {
   const [tab, setTab] = useState("view")
@@ -22,8 +23,8 @@ export default function Profile() {
         if (user && user._id) {
           // Fetch both lists to calculate completion status
           const [resCourses, resDashboard] = await Promise.all([
-            axios.get("http://localhost:5000/api/admin/courses"),
-            axios.get(`http://localhost:5000/api/student/dashboard/${user._id}`)
+            axios.get(`${BASE_BACKEND_URL}/api/admin/courses`),
+            axios.get(`${BASE_BACKEND_URL}/api/student/dashboard/${user._id}`)
           ]);
 
           const allDbCourses = resCourses.data;
@@ -59,7 +60,7 @@ export default function Profile() {
 
   const handleSave = async () => {
     try {
-      const res = await axios.put("http://localhost:5000/api/auth/update-profile", {
+      const res = await axios.put(`${BASE_BACKEND_URL}/api/auth/update-profile`, {
         email: user.email,
         name: form.name,
         linkedin: form.linkedin,

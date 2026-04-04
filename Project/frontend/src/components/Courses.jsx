@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import axios from "axios"
+import BASE_BACKEND_URL from "../config"
 import { MdBook, MdPlayCircleFilled, MdCheckCircle, MdLayers, MdClose } from "react-icons/md"
 
 export default function Courses() {
@@ -12,11 +13,11 @@ export default function Courses() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const resCourses = await axios.get("http://localhost:5000/api/admin/courses")
+                const resCourses = await axios.get(`${BASE_BACKEND_URL}/api/admin/courses`)
                 setCourses(resCourses.data)
 
                 if (user && user._id) {
-                    const resStudent = await axios.get(`http://localhost:5000/api/student/dashboard/${user._id}`)
+                    const resStudent = await axios.get(`${BASE_BACKEND_URL}/api/student/dashboard/${user._id}`)
                     setEnrolled(resStudent.data.ongoing || [])
                 }
             } catch (err) {
@@ -156,7 +157,7 @@ export default function Courses() {
                                         onClick={async () => {
                                             try {
                                                 await axios.post(
-                                                    "http://localhost:5000/api/admin/enroll-student",
+                                                    `${BASE_BACKEND_URL}/api/admin/enroll-student`,
                                                     {
                                                         studentId: user._id,
                                                         courseId: modal._id
@@ -164,7 +165,7 @@ export default function Courses() {
                                                 )
 
                                                 const res = await axios.get(
-                                                    `http://localhost:5000/api/student/dashboard/${user._id}`
+                                                    `${BASE_BACKEND_URL}/api/student/dashboard/${user._id}`
                                                 )
 
                                                 setEnrolled(res.data.ongoing || [])

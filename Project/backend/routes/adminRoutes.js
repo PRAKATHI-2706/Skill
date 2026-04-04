@@ -11,5 +11,7 @@ router.get("/courses", adminController.getCourses);
 router.get("/student/:rollNumber", adminController.getStudent);
 router.post("/enroll-student", adminController.enrollStudent);
 router.put("/update-topic", adminController.updateTopic);
+router.delete("/delete-course/:courseId", adminController.deleteCourse);
+router.delete("/delete-topic", adminController.deleteTopic);
 
 export default router; // <-- ES Module default export

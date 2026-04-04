@@ -25,9 +25,11 @@ const Login = () => {
     setLoading(true)
 
     try {
+      // Use BASE_BACKEND_URL for API endpoints
+      const BASE_BACKEND_URL = require("../config").default || require("../config");
       const url = isRegister
-        ? "http://localhost:5000/api/auth/register"
-        : "http://localhost:5000/api/auth/login"
+        ? `${BASE_BACKEND_URL}/api/auth/register`
+        : `${BASE_BACKEND_URL}/api/auth/login`
 
       const body = isRegister
         ? {

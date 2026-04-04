@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import BASE_BACKEND_URL from "../config";
 import { 
   MdTimeline, 
   MdArrowBack,
@@ -18,10 +19,10 @@ export default function Progress() {
         const fetchData = async () => {
             try {
                 if (user && user._id) {
-                    const res = await axios.get(`http://localhost:5000/api/student/dashboard/${user._id}`);
+                    const res = await axios.get(`${BASE_BACKEND_URL}/api/student/dashboard/${user._id}`);
                     setOngoing(res.data.ongoing || []);
                 }
-                const resCourses = await axios.get("http://localhost:5000/api/admin/courses");
+                const resCourses = await axios.get(`${BASE_BACKEND_URL}/api/admin/courses`);
                 setCourses(resCourses.data);
             } catch {
                 // fallback: do nothing
